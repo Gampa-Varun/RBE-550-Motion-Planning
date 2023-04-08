@@ -35,7 +35,8 @@ def find_obstacle_to_save(obstacles_to_save,points,current_position):
     goal = None
     possible_points = []
     for point in points:
-        if euclidean((point.vertex[0],point.vertex[1]),obstacle_select.get_center()) < 20:
+        min_dist = min(euclidean((point.vertex[0],point.vertex[1]),(obstacle_select.x[0],obstacle_select.y[0])),euclidean((point.vertex[0],point.vertex[1]),(obstacle_select.x[1],obstacle_select.y[1])),euclidean((point.vertex[0],point.vertex[1]),(obstacle_select.x[2],obstacle_select.y[2])),euclidean((point.vertex[0],point.vertex[1]),(obstacle_select.x[3],obstacle_select.y[3])))
+        if min_dist < 10:
             possible_points.append(point)
 
     for point in possible_points:
@@ -73,7 +74,7 @@ if __name__ == "__main__":
     obstacle_map = Generate_obstacles.generate_obstacles()
 
     #Generate PRM agent
-    prm_agent = PRM.PRM(obstacle_map,1200,5)
+    prm_agent = PRM.PRM(obstacle_map,1400,5)
     #Generate A* agent
     wumpus_agent = Wumpus_A_star.wumpus_A_star(obstacle_map)
     #Generate  points
@@ -120,6 +121,8 @@ if __name__ == "__main__":
     obstacle_to_save_updated = False
     obstacle_to_burn_updated = False
     extinguished_counter = 0
+    prm_planning_time = 0
+    wumpus_planning_time = 0
 
     for iteration in tqdm.tqdm(range(36000)):
 
@@ -131,7 +134,10 @@ if __name__ == "__main__":
         if truck_goal_reached:
             if(len(burning_obstacles) != 0):
                 goal_truck,obstacle_to_save = find_obstacle_to_save(burning_obstacles,points,start_truck)
+                start_time = time.time()
                 truck_path,_ = prm_agent.generate_road_from_graph(start_point = start_truck, goal_node=goal_truck)
+                end_time = time.time()
+                prm_planning_time += end_time - start_time
                 if truck_path == None:
                     truck_goal_reached = True
                     truck_path = []
@@ -142,7 +148,10 @@ if __name__ == "__main__":
         if wumpus_goal_reached:
             if(len(unburnt_obstacles) != 0):
                 goal_wumpus, obstacle_to_burn = find_obstacle_to_burn(unburnt_obstacles,points)
+                start_time = time.time()
                 wumpus_path = wumpus_agent.get_path([start_wumpus.vertex[0],start_wumpus.vertex[1]], [goal_wumpus.vertex[0],goal_wumpus.vertex[1]])
+                end_time = time.time()
+                wumpus_planning_time += end_time - start_time
                 wumpus_goal_reached = False
         
         if wumpus_wait_counter == settings.wumpus_speed_limiter:
@@ -224,8 +233,8 @@ if __name__ == "__main__":
                 continue
             tetromino.update(settings.sim_time)
 
-        # if len(burning_obstacles) == 0 and len(unburnt_obstacles) == 0:
-        #     break
+        if len(burning_obstacles) == 0 and len(unburnt_obstacles) == 0:
+            break
 
                 
 
@@ -243,6 +252,9 @@ if __name__ == "__main__":
 
     print('Number of obstacles saved',num_saved/len(obstacle_map))
     print('Number of obstacles burned',num_burned/len(obstacle_map))
+    print('Number of obstacles unburnt',len(unburnt_obstacles)/len(obstacle_map))
+    print('cpu time for prm planning',prm_planning_time)
+    print('cpu time for wumpus planning',wumpus_planning_time)
             
         
 

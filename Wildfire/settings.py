@@ -28,7 +28,7 @@ def init():
     grid_width = 250 # 250 meters
     grid_height = 250 # 250 meters
     coverage = 0.1 # 10% coverage
-    time_to_burn = 300 # 300 seconds
+    time_to_burn = 400 # 300 seconds
     obstacle_height = 5 # 5 meter
     obstacle_width = 5 # 5 meter
     car_length = 4.9 # 4.9 meters
